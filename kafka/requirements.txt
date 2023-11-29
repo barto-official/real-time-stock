@@ -1,0 +1,14 @@
+charset-normalizer==3.3.2
+confluent-kafka
+idna==3.4
+numpy
+pandas
+python-dateutil==2.8.2
+pytz==2023.3.post1
+Cython
+requests
+river==0.19.0
+scipy
+six==1.16.0
+urllib3
+pytest

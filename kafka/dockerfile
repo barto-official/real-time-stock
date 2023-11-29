@@ -1,0 +1,29 @@
+# Use Python 3.10 image as a base
+FROM python:3.10-slim
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc g++ build-essential libssl-dev pkg-config curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install Cython
+RUN pip install Cython
+
+# Copy the current directory contents into the container at /usr/src/app
+COPY . .
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Make port available to the world outside this container
+EXPOSE 9092
+
+# Run main.py when the container launches
+CMD ["python", "./main.py"]
