@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Start/Stop Data Fetching</title>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+            integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+            crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            text-align: center;
+            padding-top: 50px;
+        }
+        button {
+            width: 150px; /* Adjust the width as needed */
+            height: 50px; /* Adjust the height as needed */
+            margin: 10px; /* Adds space between the buttons */
+            font-size: 20px; /* Increases the font size */
+        }
+        .info-text {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        #valueContainer.valueContainer {
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        border: 2px solid black; /* Black frame around the container */
+        padding-top: 15px; /* Adjust padding as needed */
+        padding-bottom: 15px; /* Adjust padding as needed */
+        width: 150px; /* Adjust width as needed */
+        display: block; /* Make the container inline-block to fit content */
+        margin: 20px auto; /* Center align if needed with top and bottom margin */
+        center-align: center;
+        position: relative;
+        }
+        .info-text2 {
+            margin-top: 20px;
+            font-size: 10px;
+            font-style: italic;
+        }
+
+        .name-label {
+            font-size: 25px;
+            color: #666;
+        }
+
+        .value-label {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .value-change {
+            font-size: 14px;
+        }
+
+        .change-percentage {
+            color: #000000;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+<div class="info-text">
+    Status: <span id="status-value">Not Working</span><br>
+    Datatime: <span id="datetime-value"></span><br>
+    <br>
+    Prediction requested at: <span id="input-value"></span><br>
+    Prediction: <span id="prediction-value"></span>
+</div>
+<button type="button" id="startButton" onclick="startFetching()">Start</button>
+<button type="button" id="stopButton" onclick="stopFetching()">Stop</button>
+<div id="valueContainer" class="valueContainer">
+    <div class="name-label">AAPL</div>
+    <div class="value-label">0</div>
+    <div class="value-change">
+        <span class="change-percentage">0%</span>
+        <span class="change-amount">0</span>
+    </div>
+</div>
+<div class="info-text2">
+    The App works on Apple Stock Data by fetching real-time stock value every 5 seconds.
+    Once Started, you can run the job for 1 minute.
+    Then, a necessary 2 minutes cooldown period is enforced.
+    Predictions are generated for the horizon of 2 next minutes.
+</div>
+<script>
+    var countdownIntervalId = null;  // Declare the interval ID variable
+    var previousValue = null; // This should be null initially and outside to keep its state
+    var socket = io();
+
+    socket.on('update_data', function(data) {
+        console.log(data);
+        const currentValue = parseFloat(data.real_stock_value); // Parse it as a float to ensure proper arithmetic operations
+        const currencyContainer = document.getElementById('valueContainer');
+        const valueLabel = currencyContainer.querySelector('.value-label'); // Corrected class selector
+
+    // Compare with the previous value if it exists
+    if (previousValue !== null) {
+        const change = currentValue - previousValue;
+        updateCurrency(change); // Call the function that updates the frontend and background
+    }
+
+    // Update the previousValue for the next comparison
+    previousValue = currentValue;
+    valueLabel.innerText = currentValue.toFixed(2); // Display the value with two decimal places
+
+
+    // Update the DOM elements with the received data
+    document.getElementById('prediction-value').innerText = data.prediction; // Make sure this matches the JSON key sent from the server
+    document.getElementById('input-value').innerText = data.click_time; // Make sure this matches the JSON key sent from the server
+    document.getElementById('status-value').innerText = data.status; // Make sure this matches the JSON key sent from the server
+
+
+    // Enable or disable the start button based on the cooldown status
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    if (data.cooldown) {
+        startButton.disabled = true;
+        startButton.style.opacity = 0.5;  // Visually indicate the button is disabled
+        stopButton.disabled = true;
+        stopButton.style.opacity = 0.5;  // Visually indicate the button is disabled
+    } else if (data.status === 'Available') {
+        startButton.disabled = false;
+        startButton.style.opacity = 1;  // Restore button appearance
+        stopButton.style.opacity = 0.5;
+        stopButton.disabled = true;
+    }
+    else if (data.status === 'Working') {
+        startButton.disabled = true;
+        startButton.style.opacity = 1;  // Restore button appearance
+        stopButton.style.opacity = 1;
+        stopButton.disabled = false;
+        }
+    else {
+        startButton.disabled = false;
+        startButton.style.opacity = 1;  // Restore button appearance
+        stopButton.style.opacity = 1;
+        stopButton.disabled = false;
+    }
+    // Handle status message
+const statusElement = document.getElementById('status-value');
+if (data.status === 'Unavailable') {
+    let countdown = Math.max(Math.floor(data.cooldown_time), 0); // Ensure it doesn't go negative
+    statusElement.innerText = `Status: Unavailable | The App available in: ${countdown} seconds`;
+
+    // Clear any existing interval to avoid multiple intervals running
+    if (countdownIntervalId !== null) {
+        clearInterval(countdownIntervalId);
+    }
+
+    // Update countdown every second if there's time remaining
+    if (countdown > 0) {
+        countdownIntervalId = setInterval(() => {
+            countdown -= 1;
+            statusElement.innerText = `Status: Unavailable | The App available in: ${countdown} seconds`;
+            if (countdown <= 0) {
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null; // Reset the interval ID
+                // Update the status to available or the next status from the server
+                statusElement.innerText = `Status: Available`;
+            }
+        }, 1000);
+    }
+} else {
+    // Show available status
+    statusElement.innerText = `Status: ${data.status}`;
+    // If status is not 'unavailable', clear any running countdown interval
+    if (countdownIntervalId !== null) {
+        clearInterval(countdownIntervalId);
+        countdownIntervalId = null;
+    }
+}
+});
+
+    function startFetching() {
+        socket.emit('start_fetching');
+    }
+
+    function stopFetching() {
+        socket.emit('stop_fetching');
+    }
+
+function updateCurrency(changeValue) {
+    const currencyContainer = document.getElementById('valueContainer');
+    const percentageElem = currencyContainer.querySelector('.change-percentage');
+    const amountElem = currencyContainer.querySelector('.change-amount');
+
+    // Format the change value as needed, e.g., to percentage
+    percentageElem.textContent = `${changeValue >= 0 ? '+' : ''}${changeValue.toFixed(2)}%`;
+    amountElem.textContent = `(${Math.abs(changeValue).toFixed(2)})`;
+
+    // Set text color based on positive or negative change
+    const color = changeValue >= 0 ? 'green' : 'red';
+    percentageElem.style.color = color;
+    amountElem.style.color = color;
+
+    // Change background color based on positive or negative change
+    currencyContainer.style.backgroundColor = changeValue >= 0 ? '#90ee90' : '#ffcccb'; // Light green for positive, light red for negative
+
+    // Remove the background color after a delay
+    setTimeout(() => {
+        currencyContainer.style.backgroundColor = ''; // Reset to default
+    }, 1000);
+}
+    // Function to update the datetime every second
+    function updateDateTime() {
+        const datetimeElement = document.getElementById('datetime-value');
+        datetimeElement.innerText = new Date().toLocaleString();
+    }
+
+    // Call updateDateTime every second (1000 milliseconds)
+    setInterval(updateDateTime, 1000);
+
+    // Initial call to display the time immediately on load
+    updateDateTime();
+
+</script>
+
+</body>
+</html>
+
