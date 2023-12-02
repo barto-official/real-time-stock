@@ -10,15 +10,28 @@ app = func.FunctionApp()
 @app.blob_trigger(arg_name="myblob", path="models/{name}",
                                connection="models") 
 async def main(myblob: func.InputStream):
+    """
+    Function that is triggered when a new blob is uploaded to the models container.
+    Calls the API of the models to retrain them. In our case, we have 3 models, so we call the API of each model.
+
+    Parameters
+    ----------
+    myblob : func.InputStream
+        Blob that triggered the function. It contains the name of the blob and other relevant data.
+    path : str
+        Path of the blob in the container. Check documentation for common patterns.
+    connection : str
+        Connection string to the container.
+    """
     # Log the name and size of the blob
     logging.info(f"Python Blob trigger function processed blob \n"
                  f"Name: {myblob.name}\n"
                  f"Size: {myblob.length} bytes")
     
     # URL of Containers with the models
-    api_url = "http://model1-rtp-2023.fterebbdfab6fscu.westeurope.azurecontainer.io:8001/update-model"
-    api_url2 = "http://model2-rtp-2023.ayctcdh0dre3hge6.westeurope.azurecontainer.io:8001/update-model"
-    api_url3 = "http://model3-rtp-2023.bqgadxddh7h7fyes.westeurope.azurecontainer.io:8001/update-model"
+    api_url = # URL
+    api_url2 = # URL
+    api_url3 = # URL
     try:
         # Post request to API with the blob name or other relevant data
         response = requests.post(api_url, json={"blob_name": myblob.name})
@@ -26,8 +39,9 @@ async def main(myblob: func.InputStream):
         time.sleep(180)
 
         response = requests.post(api_url2, json={"blob_name": myblob.name})
-        time.sleep(180)
         logging.info(f"API response for Model 2: {response.status_code}, {response.text}")
+        
+        time.sleep(180)
         response = requests.post(api_url3, json={"blob_name": myblob.name})
         logging.info(f"API response for Model 3: {response.status_code}, {response.text}")
         logging.info("Function calls completed")
