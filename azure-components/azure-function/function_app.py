@@ -29,20 +29,23 @@ async def main(myblob: func.InputStream):
                  f"Size: {myblob.length} bytes")
     
     # URL of Containers with the models
-    api_url = # URL
-    api_url2 = # URL
-    api_url3 = # URL
+    api_url = #URL of Model 1
+    api_url2 = #URL of Model 2
+    api_url3 = #URL of Model 3
     try:
+        # Split the blob name to get the filename
+        filename = myblob.name.split('/')[-1]
+
         # Post request to API with the blob name or other relevant data
-        response = requests.post(api_url, json={"blob_name": myblob.name})
+        response = requests.post(api_url, json={"blob_name": filename})
+        
         logging.info(f"API response for Model 1: {response.status_code}, {response.text}")
         time.sleep(180)
 
-        response = requests.post(api_url2, json={"blob_name": myblob.name})
+        response = requests.post(api_url2, json={"blob_name": filename})
         logging.info(f"API response for Model 2: {response.status_code}, {response.text}")
-        
         time.sleep(180)
-        response = requests.post(api_url3, json={"blob_name": myblob.name})
+        response = requests.post(api_url3, json={"blob_name": filename})
         logging.info(f"API response for Model 3: {response.status_code}, {response.text}")
         logging.info("Function calls completed")
     except Exception as e:
