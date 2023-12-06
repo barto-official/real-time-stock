@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Start/Stop Data Fetching</title>
+<script crossorigin="anonymous" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+
+<link href="/static/style.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+    <div class="info-text">
+        Status: <span id="status-value">Not Working</span><br/>
+        Datatime: <span id="datetime-value"></span><br/>
+        <br/>
+        Prediction requested at: <span id="time_of_request"></span><br/>
+        Prediction: <span id="prediction-value"></span>
+    </div>
+    <button id="startButton" onclick="startFetching()" type="button">Start</button>
+    <button id="stopButton" onclick="stopFetching()" type="button">Stop</button>
+    <div class="valueContainer" id="valueContainer">
+    <div class="name-label">BTC/USD</div>
+    <div class="value-label">0</div>
+    <div class="value-change">
+    <span class="change-percentage">0%</span>
+    <span class="change-amount">0</span>
+    </div>
+    </div>
+    <div class="info-text2">
+        The App works on Apple Stock Data by fetching real-time stock value every 5 seconds.
+        Once Started, you can run the job for 1 minute.
+        Then, a necessary 2 minutes cooldown period is enforced.
+        Predictions are generated for the horizon of 2 next minutes.
+    </div>
+<script src="/static/script.js"></script>
+
+</body>
+</html>

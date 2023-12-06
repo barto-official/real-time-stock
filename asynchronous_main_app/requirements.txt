@@ -1,0 +1,8 @@
+fastapi
+websockets
+azure-eventhub
+uvicorn
+jinja2
+twelvedata
+aiohttp
+azure-eventhub-checkpointstoreblob-aio

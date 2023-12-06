@@ -1,0 +1,53 @@
+
+        body {
+            text-align: center;
+            padding-top: 50px;
+        }
+        button {
+            width: 150px; /* Adjust the width as needed */
+            height: 50px; /* Adjust the height as needed */
+            margin: 10px; /* Adds space between the buttons */
+            font-size: 20px; /* Increases the font size */
+        }
+        .info-text {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        #valueContainer.valueContainer {
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        border: 2px solid black; /* Black frame around the container */
+        padding-top: 15px; /* Adjust padding as needed */
+        padding-bottom: 15px; /* Adjust padding as needed */
+        width: 150px; /* Adjust width as needed */
+        display: block; /* Make the container inline-block to fit content */
+        margin: 20px auto; /* Center align if needed with top and bottom margin */
+        center-align: center;
+        position: relative;
+        }
+        .info-text2 {
+            margin-top: 20px;
+            font-size: 10px;
+            font-style: italic;
+        }
+
+        .name-label {
+            font-size: 25px;
+            color: #666;
+        }
+
+        .value-label {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .value-change {
+            font-size: 14px;
+        }
+
+        .change-percentage {
+            color: #000000;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    
