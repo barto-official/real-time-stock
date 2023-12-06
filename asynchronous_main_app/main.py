@@ -1,9 +1,8 @@
-from fastapi import FastAPI, Request, WebSocket, BackgroundTasks
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import websockets
-import threading
 from typing import Dict
 import json
 import asyncio
@@ -14,8 +13,16 @@ import uvicorn
 from azure.eventhub.aio import EventHubConsumerClient, EventHubProducerClient
 from azure.eventhub import EventData
 from azure.eventhub.extensions.checkpointstoreblobaio import BlobCheckpointStore
-
 import logging.handlers
+import os
+
+EVENTHUB_CONNECTION_STRING = os.getenv("EVENTHUB_CONNECTION_STRING")
+EVENTHUB_NAME_CONSUMER = os.getenv("EVENTHUB_NAME_CONSUMER")
+EVENTHUB_NAME_PRODUCER = os.getenv("EVENTHUB_NAME_PRODUCER")
+EVENTHUB_NAME_CONSUMER_GROUP = os.getenv("EVENTHUB_NAME_CONSUMER_GROUP")
+TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY")
+AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+BLOB_CONTAINER = os.getenv("BLOB_CONTAINER")
 
 # Create logger
 logger1 = logging.getLogger("my_logger")
@@ -24,17 +31,17 @@ handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
 logger1.addHandler(handler)
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
-
 
 
 ### MAIN INDEX ###
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 
 ### SOCKET CONNECTIONS ###
 class WebSocketManager:
@@ -113,7 +120,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 ### DATA FETCHING ###
 async def fetch_twelvedata_data(client_id: str):
     start_time = asyncio.get_event_loop().time()
-    uri = "wss://ws.twelvedata.com/v1/quotes/price?apikey=9c9b91b490fc4a2ba8552188068c72fe"
+    uri = TWELVE_DATA_API_KEY
 
     async with websockets.connect(uri) as ws:
         await ws.send(json.dumps({"action": "subscribe", "params": {"symbols": "BTC/USD"}}))
@@ -189,24 +196,20 @@ async def emit_data(manager: WebSocketManager, client_id: str):
 
 ### EVENT HUB ###
 # Azure Event Hubs configuration
-connection_str = "Endpoint=sb://real-time-data-class.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Jjoyt121OZZ/nJl8QOc0KfvDKYxP8NREt+AEhIOua5k="
-eventhub_name_consumer = "results"
-eventhub_name_producer = "raw_data"
-
-checkpoint_store = BlobCheckpointStore.from_connection_string("DefaultEndpointsProtocol=https;AccountName=rtpstorage2023;AccountKey=tXCLgQo5ZLcoLc4FINk49mbHhJwigbKDW8DMF885ErM7W1O4OwOPG74oLXIVGKiyNLGzLI0iYfHt+ASt3MfEXQ==;EndpointSuffix=core.windows.net", "$logs")
+checkpoint_store = BlobCheckpointStore.from_connection_string(AZURE_STORAGE_CONNECTION_STRING, BLOB_CONTAINER)
 
 #Create Event Hub consumer and producer clients
 consumer_client = EventHubConsumerClient.from_connection_string(
-    connection_str,
-    consumer_group="$Default",
-    eventhub_name=eventhub_name_consumer,
+    EVENTHUB_CONNECTION_STRING,
+    consumer_group= EVENTHUB_NAME_CONSUMER_GROUP,
+    eventhub_name=EVENTHUB_NAME_CONSUMER,
     checkpoint_store=checkpoint_store,
     logging_enable=True
 )
 
 producer_client = EventHubProducerClient.from_connection_string(
-    connection_str,
-    eventhub_name=eventhub_name_producer
+    EVENTHUB_CONNECTION_STRING,
+    eventhub_name=EVENTHUB_NAME_PRODUCER
 )
 
 def create_event_consumer(client_id):

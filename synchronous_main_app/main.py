@@ -44,11 +44,11 @@ consumer_client = EventHubConsumerClient.from_connection_string(
 # Create a producer client to send messages to the event hub
 producer_client = EventHubProducerClient.from_connection_string(connection_str, eventhub_name=eventhub_name_producer)
 
-TWELVE_DATA_API_KEY =
-EVENTHUB_CONNECTION_STRING =
-EVENTHUB_NAME_CONSUMER =
-EVENTHUB_NAME_PRODUCER =
-AZURE_STORAGE_CONNECTION_STRING =
+TWELVE_DATA_API_KEY = os.getnev("TWELVE_DATA_API_KEY")
+EVENTHUB_CONNECTION_STRING = os.getenv("EVENTHUB_CONNECTION_STRING")
+EVENTHUB_NAME_CONSUMER = os.getenv("EVENTHUB_NAME_CONSUMER")
+EVENTHUB_NAME_PRODUCER = os.getenv("EVENTHUB_NAME_PRODUCER")
+AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
 # Lock for thread-safe model updates
 model_lock = threading.Lock()
